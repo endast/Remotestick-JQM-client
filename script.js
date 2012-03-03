@@ -1,5 +1,3 @@
-currentID="";
-
 $( '#index' ).live( 'pageinit',function(event){
 
 	$.getJSON('../devices.json', function(data) {
