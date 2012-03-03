@@ -14,33 +14,108 @@
 			$.getJSON('../devices.json', function(data) {
 
 				$.each(data.devices, function(key, value) { 
-					$("#indexList").append('<li><a href="#controlPage?'+value.id+'">'+value.name+'</a></li>');
+					$("#indexList").append('<li><a href="#controlPage?deviceId='+value.id+'">'+value.name+'</a></li>');
 				});
 				
 				$('#indexList').listview('refresh');
 				
 			});
 			
+			// Listen for any attempts to call changePage().
 			$(document).bind( "pagebeforechange", function( e, data ) {
 
+				// We only want to handle changePage() calls where the caller is
+				// asking us to load a page by URL.
 				if ( typeof data.toPage === "string" ) {
 
-						var u = $.mobile.path.parseUrl( data.toPage );
-						console.log(u);
-						var id = u.hash.split('?')[1];
-						if (id !== undefined){
-							$.getJSON('../devices/'+id+'.json', function(device) {
-								console.log(device);
-								$('#deviceName').text(device.name);
-							});
-						}
+					// We are being asked to load a page by URL, but we only
+					// want to handle URLs that request the data for a specific
+					// category.
+					var u = $.mobile.path.parseUrl( data.toPage ),
+						re = /^#controlPage/;
+
+					if ( u.hash.search(re) !== -1 ) {
+
+						// We're being asked to display the items for a specific category.
+						// Call our internal method that builds the content for the category
+						// on the fly based on our in-memory category data structure.
+						showCategory( u, data.options );
+
+						// Make sure to tell changePage() we've handled this call so it doesn't
+						// have to do anything.
+						e.preventDefault();
 					}
+				}
 			});
-			
-			function GetDeviceData(id){
-				
+
+			// Load the data for a specific category, based on
+			// the URL passed in. Generate markup for the items in the
+			// category, inject it into an embedded page, and then make
+			// that page the current active page.
+			function showCategory( urlObj, options )
+			{
+				var deviceId = urlObj.hash.replace( /.*deviceId=/, "" )
+
+					// The pages we use to display our content are already in
+					// the DOM. The id of the page we are going to write our
+					// content into is specified in the hash before the '?'.
+				var	pageSelector = urlObj.hash.replace( /\?.*$/, "" );
+
+					// Get the object that represents the category we
+					// are interested in.
+					$.getJSON('../devices/'+deviceId+'.json', function(device) {
+							console.log(device);	
+							
+							if ( device ) {
+								// Get the page we are going to dump our content into.
+								var $page = $( pageSelector );
+
+									// Get the header for the page.
+								var	$header = $page.children( ":jqmData(role=header)" );
+
+									// Get the content area element for the page.
+								var	$content = $page.children( ":jqmData(role=content)" );
+								
+						//		var	markup = "";
+
+								$.each(device.supportedMethods, function(index, supportedMethod) { 
+								  	
+									if(supportedMethod.name == "TELLSTICK_TURNON" ){
+											$('#on').show();
+										} else if(supportedMethod.name == "TELLSTICK_TURNOFF"){
+											$('#off').show();
+										}
+								});
+							
+								// Find the h1 element in our header and inject the name of
+								// the category into it.
+								$header.find( "h1" ).html( device.name );
+
+								// Inject the category items markup into the content element.
+						//		$content.html( markup );
+
+								// Pages are lazily enhanced. We call page() on the page
+								// element to make sure it is always enhanced before we
+								// attempt to enhance the listview markup we just injected.
+								// Subsequent calls to page() are ignored since a page/widget
+								// can only be enhanced once.
+								$page.page();
+
+								// We don't want the data-url of the page we just modified
+								// to be the url that shows up in the browser's location field,
+								// so set the dataUrl option to the URL for the category
+								// we just loaded.
+								options.dataUrl = urlObj.href;
+
+								// Now call changePage() and tell it to switch to
+								// the page we just modified.
+								$.mobile.changePage( $page, options );
+							}
+												
+						});
 			}
-			
+
+
 			function turnOn(){
 				$.getJSON('../devices/'+getId()+'/on.json');
 				
@@ -51,13 +126,19 @@
 			}
 			
 			function getId(){
-				var id = $.mobile.activePage.attr('id').split('-')[1];
-
+				var id = jQuery(location).attr('href').split("=")[1];
 				return id
 			}
 			
 			$("#off").click(function() {
+				turnOff();
 			});
+			
+			$("#on").click(function() {
+				turnOn();
+				
+			});
+			
 			
 		});
 
@@ -82,10 +163,15 @@
 <div data-role="page" id="controlPage" data-add-back-btn="true">
 
 	<div data-role="header">
-		<h1 id="deviceName"></h1>
+		<h1></h1>
 	</div>
 
-	<div data-role="content">	
+	<div data-role="content">
+		<fieldset class="ui-grid-a">
+			<div class="ui-block-a"><button id="on" type="submit" data-theme="c">On</button></div>
+			<div class="ui-block-b"><button id="off" type="submit" data-theme="b">Off</button></div>	   
+		</fieldset>
+		
 	</div>
 	
 </div>
