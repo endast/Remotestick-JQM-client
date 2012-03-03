@@ -14,7 +14,7 @@
 			$.getJSON('../devices.json', function(data) {
 
 				$.each(data.devices, function(key, value) { 
-					$("#indexList").append('<li><a href="#controlPage-'+value.id+'">'+value.name+'</a></li>');
+					$("#indexList").append('<li><a href="#controlPage?'+value.id+'">'+value.name+'</a></li>');
 				});
 				
 				$('#indexList').listview('refresh');
@@ -26,20 +26,12 @@
 				if ( typeof data.toPage === "string" ) {
 
 						var u = $.mobile.path.parseUrl( data.toPage );
-						var id = u.hash.split('-')[1];
+						console.log(u);
+						var id = u.hash.split('?')[1];
 						if (id !== undefined){
-							$.getJSON('../devices/'+id+'.json', function(data) {
-								console.log(data);
-							
-								//create markup
-								var newPage = $("<div id=\""+u.hash+"\" data-role=page data-url=\""+u.hash+"\"><div data-role=header><h1>"+data.name+"</h1></div><div data-role=content><fieldset class=\"ui-grid-a\"><div class=\"ui-block-a\"><button id=\"on\" type=\"submit\">ON</button></div><div class=\"ui-block-b\"><button id=\"off\" type=\"submit\">OFF</button></div></fieldset></div></div");
-
-								//append it to the page container
-								newPage.appendTo( $.mobile.pageContainer );
-								
-								//go to it
-								$.mobile.changePage( newPage );
-								
+							$.getJSON('../devices/'+id+'.json', function(device) {
+								console.log(device);
+								$('#deviceName').text(device.name);
 							});
 						}
 					}
@@ -86,5 +78,17 @@
 	</div>
 
 </div>
+
+<div data-role="page" id="controlPage" data-add-back-btn="true">
+
+	<div data-role="header">
+		<h1 id="deviceName"></h1>
+	</div>
+
+	<div data-role="content">	
+	</div>
+	
+</div>
+
 </body>
 </html>
