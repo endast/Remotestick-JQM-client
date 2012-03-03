@@ -50,17 +50,18 @@ $( '#index' ).live( 'pageinit',function(event){
 						$.each(device.supportedMethods, function(index, supportedMethod) { 
 						  	
 							if(supportedMethod.name == "TELLSTICK_TURNON" ){
+
 									$('#on').show();
+														
+							} else if(supportedMethod.name == "TELLSTICK_TURNOFF"){
 									
-								} else if(supportedMethod.name == "TELLSTICK_TURNOFF"){
-									
-									$('#off').show();
+								$('#off').show();
 
-								}	else if(supportedMethod.name == "TELLSTICK_DIM"){
+							}	else if(supportedMethod.name == "TELLSTICK_DIM"){
 
-									$('#dimmerContainer').show();
+								$('#dimmerContainer').show();
 									
-								}
+							}
 								
 						});
 					
@@ -101,7 +102,6 @@ $( '#index' ).live( 'pageinit',function(event){
 	$("#on").click(function() {
 		turnOn();
 	});
-
 	
 	$("#dim").live("change", function() {
 		var dim_value = $(this).val();
